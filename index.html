@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchakroun - Haute bijouterie privée</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- React & ReactDOM via CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel standalone for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Supabase via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(240 10% 3.9%)",
+                        primary: "hsl(240 5.9% 10%)",
+                        "primary-foreground": "hsl(0 0% 98%)",
+                        gold: "hsl(43 74% 49%)",
+                        "gold-foreground": "hsl(0 0% 100%)",
+                        muted: "hsl(240 4.8% 95.9%)",
+                        "muted-foreground": "hsl(240 3.8% 46.1%)",
+                        border: "hsl(240 5.9% 90%)",
+                        card: "hsl(0 0% 100%)",
+                        "card-foreground": "hsl(240 10% 3.9%)"
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    letterSpacing: {
+                        luxe: '0.15em',
+                    },
+                    boxShadow: {
+                        soft: "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
+                        luxury: "0 10px 40px -5px rgba(0, 0, 0, 0.1)",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Reveal animation */
+        [data-reveal] {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease-out;
+        }
+
+        [data-reveal].is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Navbar transparente */
+        .navbar-transparent {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .navbar-transparent a,
+        .navbar-transparent button {
+            color: #fff !important;
+        }
+
+        .navbar-transparent .nav-logo {
+            color: #fff !important;
+        }
+
+        .navbar-scrolled {
+            background: rgba(255, 255, 255, 0.92) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .navbar-scrolled a,
+        .navbar-scrolled button {
+            color: inherit !important;
+        }
+
+        .navbar-scrolled .nav-logo {
+            color: #0f0f0f !important;
+        }
+
+        /* Landing commerciale */
+        .commercial-section {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1208 50%, #0f0f0f 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .commercial-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 60% 50%, rgba(192, 148, 58, 0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .promo-card {
+            border: 1px solid rgba(192, 148, 58, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .promo-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(192, 148, 58, 0.7);
+            box-shadow: 0 20px 50px rgba(192, 148, 58, 0.12);
+        }
+
+        .gold-line {
+            width: 48px;
+            height: 2px;
+            background: linear-gradient(90deg, #c0943a, #e8c97a);
+            display: inline-block;
+        }
+
+        .countdown-box {
+            background: rgba(192, 148, 58, 0.12);
+            border: 1px solid rgba(192, 148, 58, 0.4);
+            min-width: 64px;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-foreground antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- Mock Data & Images ---
+        const heroImage = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop";
+        const ringImage = "https://images.unsplash.com/photo-1605100804763-247f66122be1?q=80&w=1024&auto=format&fit=crop";
+        const necklaceImage = "https://images.unsplash.com/photo-1599643478524-fb9651915411?q=80&w=1024&auto=format&fit=crop";
+        const braceletImage = "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=1024&auto=format&fit=crop";
+
+        const fallbackImages = [ringImage, necklaceImage, braceletImage];
+
+        const defaultContent = {
+            hero: {
+                title: "Benchakroun",
+                body: "Bijoux d’exception façonnés pour les instants rares.",
+                image_url: null,
+                link_url: "https://wa.me/212600000000",
+            },
+            about: {
+                title: "L’art du bijou confidentiel",
+                body: "Une sélection hautement éditée de pièces précieuses, pensée pour une expérience privée et intemporelle.",
+            },
+            contact: {
+                title: "Prendre rendez-vous",
+                body: "Réservez une consultation privée en boutique ou à distance.",
+            },
+        };
+
+        const defaultProducts = [
+            {
+                id: "fallback-ring",
+                name: "Bague Éclat Souverain",
+                price: 4200,
+                description: "Or 18 carats et diamant central, sertissage délicat pour une brillance pure.",
+                image_url: ringImage,
+                category: "Bagues",
+                is_featured: true,
+                display_order: 1,
+            },
+            {
+                id: "fallback-necklace",
+                name: "Collier Ligne Lumière",
+                price: 6800,
+                description: "Chaîne précieuse ponctuée de diamants taille brillant, silhouette fluide et intemporelle.",
+                image_url: necklaceImage,
+                category: "Colliers",
+                is_featured: true,
+                display_order: 2,
+            },
+            {
+                id: "fallback-bracelet",
+                name: "Bracelet Riviera Or",
+                price: 5300,
+                description: "Or jaune poli miroir, maillons sculptés et fermoir invisible.",
+                image_url: braceletImage,
+                category: "Bracelets",
+                is_featured: false,
+                display_order: 3,
+            },
+        ];
+
+        // --- Icons ---
+        const MenuIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>;
+        const XIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>;
+        const SendIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>;
+        const FacebookIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>;
+        const InstagramIcon = ({ className }) => <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>;
+
+        const TikTokIcon = ({ className = "" }) => (
+            <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+                <path d="M16.6 3c.32 2.38 1.66 3.8 4.02 3.95v3.16a7.35 7.35 0 0 1-4.02-1.25v5.98c0 3.04-2.08 5.16-5.2 5.16-2.85 0-5.02-1.94-5.02-4.7 0-3.12 2.48-5.14 5.96-4.52v3.27c-1.56-.5-2.7.2-2.7 1.25 0 .95.76 1.54 1.74 1.54 1.18 0 1.88-.72 1.88-2.14V3h3.34Z" />
+            </svg>
+        );
+
+        const WhatsAppIcon = ({ className = "" }) => (
+            <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+                <path d="M12.04 2C6.58 2 2.14 6.44 2.14 11.9c0 1.74.46 3.44 1.32 4.94L2 22l5.29-1.39a9.86 9.86 0 0 0 4.75 1.21h.01c5.46 0 9.9-4.44 9.9-9.9C21.95 6.45 17.5 2 12.04 2Zm0 18.13h-.01a8.22 8.22 0 0 1-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.2 8.2 0 1 1 7 3.89Zm4.5-6.15c-.25-.12-1.46-.72-1.69-.8-.23-.08-.4-.12-.56.12-.17.25-.65.8-.8.96-.15.17-.29.19-.54.06-.25-.12-1.04-.38-1.98-1.22-.73-.65-1.23-1.46-1.37-1.71-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.44.12-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.6c.12.17 1.77 2.7 4.28 3.78.6.26 1.06.41 1.43.53.6.19 1.14.16 1.57.1.48-.07 1.46-.6 1.67-1.17.21-.58.21-1.07.15-1.17-.06-.1-.23-.17-.48-.29Z" />
+            </svg>
+        );
+
+        const formatPrice = (price) =>
+            new Intl.NumberFormat("fr-FR", { style: "currency", currency: "MAD", maximumFractionDigits: 0 }).format(price);
+
+        const Index = () => {
+            const [products, setProducts] = useState(defaultProducts);
+            const [content, setContent] = useState(defaultContent);
+            const [menuOpen, setMenuOpen] = useState(false);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [scrolled, setScrolled] = useState(false);
+            const [countdown, setCountdown] = useState({ h: '23', m: '47', s: '59' });
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 60);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            useEffect(() => {
+                let total = 23 * 3600 + 47 * 60 + 59;
+                const timer = setInterval(() => {
+                    total--;
+                    if (total < 0) total = 86399;
+                    const h = String(Math.floor(total / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+                    const s = String(total % 60).padStart(2, '0');
+                    setCountdown({ h, m, s });
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            useEffect(() => {
+                // Initialize Supabase if URL and Key are available, else rely on default content
+                // As this is a single file without env vars, we mock the fetch or rely on defaults
+                // For a real app, user would put Supabase keys here
+
+                // Reveal animation setup
+                const elements = document.querySelectorAll("[data-reveal]");
+                const observer = new IntersectionObserver(
+                    (entries) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) entry.target.classList.add("is-visible");
+                        });
+                    },
+                    { threshold: 0.12 }
+                );
+
+                elements.forEach((element) => observer.observe(element));
+                return () => observer.disconnect();
+            }, []);
+
+            const categories = useMemo(() => Array.from(new Set(products.map((product) => product.category))), [products]);
+            const hero = content.hero ?? defaultContent.hero;
+            const about = content.about ?? defaultContent.about;
+            const contact = content.contact ?? defaultContent.contact;
+            const whatsappUrl = hero.link_url || "https://wa.me/212600000000";
+
+            const submitContact = async (event) => {
+                event.preventDefault();
+                setIsSubmitting(true);
+
+                // Simulate network request
+                setTimeout(() => {
+                    alert("Votre demande a bien été transmise.");
+                    setIsSubmitting(false);
+                    event.target.reset();
+                }, 1000);
+            };
+
+            return (
+                <main className="min-h-screen bg-background text-foreground">
+                    <header className={`fixed inset-x-0 top-0 z-40 ${scrolled ? 'navbar-scrolled' : 'navbar-transparent'}`}>
+                        <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8" aria-label="Navigation principale">
+                            <a href="#accueil" className="group flex items-center gap-3" aria-label="Benchakroun accueil">
+                                <img src="logo-final.png" alt="BVB Logo" className="h-10 w-auto object-contain transition-all duration-300" />
+                                <span className="nav-logo font-serif text-2xl tracking-normal font-semibold">Benchakroun</span>
+                            </a>
+
+                            <div className="hidden items-center gap-7 text-xs uppercase tracking-luxe md:flex font-medium">
+                                <a className="transition-colors hover:text-gold" href="#bagues">Bagues</a>
+                                <a className="transition-colors hover:text-gold" href="#bracelets">Bracelets</a>
+                                <a className="transition-colors hover:text-gold" href="#colliers">Colliers</a>
+                                <a className="transition-colors hover:text-gold" href="#artisanat">Artisanat</a>
+                                <a className="transition-colors hover:text-gold" href="#maison">Maison</a>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="grid size-10 place-items-center border border-current/30 md:hidden rounded"
+                                onClick={() => setMenuOpen((value) => !value)}
+                                aria-label="Ouvrir le menu"
+                            >
+                                {menuOpen ? <XIcon className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+                            </button>
+                        </nav>
+
+                        {menuOpen && (
+                            <div className="border-t border-white/10 bg-black/90 backdrop-blur-xl px-5 py-5 md:hidden">
+                                <div className="flex flex-col gap-4 text-sm uppercase tracking-luxe text-white/80 font-medium">
+                                    <a href="#bagues" onClick={() => setMenuOpen(false)}>Bagues</a>
+                                    <a href="#bracelets" onClick={() => setMenuOpen(false)}>Bracelets</a>
+                                    <a href="#colliers" onClick={() => setMenuOpen(false)}>Colliers</a>
+                                    <a href="#artisanat" onClick={() => setMenuOpen(false)}>Artisanat</a>
+                                    <a href="#maison" onClick={() => setMenuOpen(false)}>Maison</a>
+                                </div>
+                            </div>
+                        )}
+                    </header>
+
+                    <section id="accueil" className="relative flex min-h-[92vh] items-end overflow-hidden bg-primary pt-24">
+                        <img
+                            src={hero.image_url || heroImage}
+                            alt="Bijoux de luxe présentés sur marbre et velours noir"
+                            className="absolute inset-0 h-full w-full object-cover opacity-80"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" aria-hidden="true"></div>
+                        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-16 lg:px-8 lg:pb-24">
+                            <div className="max-w-3xl">
+                                <p className="mb-5 text-sm uppercase tracking-luxe text-gold font-medium">Haute bijouterie privée</p>
+                                <h1 className="font-serif text-5xl leading-[1.1] text-white sm:text-7xl lg:text-8xl">
+                                    {hero.title || defaultContent.hero.title}
+                                </h1>
+                                <p className="mt-7 max-w-2xl text-lg leading-8 text-white/90 sm:text-xl">
+                                    {hero.body || defaultContent.hero.body}
+                                </p>
+                                <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+                                    <a href="#collection" className="inline-flex items-center justify-center px-8 py-4 text-sm font-medium uppercase tracking-luxe bg-gold text-white hover:bg-gold/90 transition-colors">Découvrir</a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* ===== SECTION LANDING COMMERCIALE ===== */}
+                    <section className="commercial-section py-20 sm:py-28" data-reveal>
+                        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+
+                            {/* En-tête */}
+                            <div className="text-center mb-16">
+                                <span className="gold-line mb-5 block mx-auto"></span>
+                                <p className="text-xs uppercase tracking-luxe text-yellow-400 font-medium mb-3">Offres exclusives · Édition limitée</p>
+                                <h2 className="font-serif text-4xl sm:text-6xl text-white leading-tight">L'exception,<br /><em>à votre portée</em></h2>
+                                <p className="mt-5 text-white/60 max-w-xl mx-auto text-base leading-7">Pièces rares, créations sur-mesure et collections capsules — disponibles pour une durée limitée.</p>
+                            </div>
+
+                            {/* Bannière promo principale */}
+                            <div className="promo-card rounded-none mb-8 grid lg:grid-cols-2 overflow-hidden">
+                                <div className="relative">
+                                    <img src="https://images.unsplash.com/photo-1602173574767-37ac01994b2a?q=80&w=1024&auto=format&fit=crop" alt="Collection capsule" className="w-full h-72 lg:h-full object-cover" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
+                                    <span className="absolute top-4 left-4 bg-yellow-400 text-black text-xs font-bold uppercase tracking-widest px-3 py-1">Nouveauté</span>
+                                </div>
+                                <div className="p-10 flex flex-col justify-center">
+                                    <p className="text-xs uppercase tracking-luxe text-yellow-400 font-medium mb-3">Collection Capsule · Printemps 2026</p>
+                                    <h3 className="font-serif text-3xl text-white mb-4">Riviera Dorée</h3>
+                                    <p className="text-white/60 leading-7 mb-6">Une ligne de 12 pièces exclusives façonnées à la main, inspirées des côtes méditerranéennes. Or 18 carats, saphirs et perles naturelles.</p>
+                                    <div className="flex items-center gap-4 mb-8">
+                                        <span className="font-serif text-3xl text-yellow-400">À partir de 3 200 MAD</span>
+                                    </div>
+                                    {/* Compte à rebours */}
+                                    <div className="mb-6">
+                                        <p className="text-xs uppercase tracking-luxe text-white/40 mb-3">Offre disponible encore</p>
+                                        <div className="flex gap-3">
+                                            {[{ v: countdown.h, l: 'H' }, { v: countdown.m, l: 'Min' }, { v: countdown.s, l: 'Sec' }].map(({ v, l }) => (
+                                                <div key={l} className="countdown-box rounded px-4 py-2 text-center">
+                                                    <span className="block font-serif text-2xl text-white">{v}</span>
+                                                    <span className="text-xs text-white/40 uppercase tracking-wider">{l}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <a href="#collection" className="inline-flex items-center justify-center px-8 py-4 text-sm font-medium uppercase tracking-luxe bg-yellow-400 text-black hover:bg-yellow-300 transition-colors self-start">Voir la collection</a>
+                                </div>
+                            </div>
+
+                            {/* 3 mini-cards */}
+                            <div className="grid sm:grid-cols-3 gap-4">
+                                {[
+                                    { img: 'https://images.unsplash.com/photo-1605100804763-247f66122be1?q=80&w=600&auto=format&fit=crop', label: 'Bagues', title: 'Solitaires & pavées', desc: 'Or blanc, jaune ou rose — sertissage diamant à la main.', prix: 'Dès 1 800 MAD' },
+                                    { img: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=600&auto=format&fit=crop', label: 'Bracelets', title: 'Joncs & chaînes', desc: 'Pièces architecturales portées seules ou en layers.', prix: 'Dès 2 400 MAD' },
+                                    { img: 'https://images.unsplash.com/photo-1599643478524-fb9651915411?q=80&w=600&auto=format&fit=crop', label: 'Colliers', title: 'Pendentifs signatures', desc: 'Chaînes précieuses et médailles gravées sur commande.', prix: 'Dès 2 900 MAD' },
+                                ].map(({ img, label, title, desc, prix }) => (
+                                    <div key={label} className="promo-card overflow-hidden group cursor-pointer">
+                                        <div className="overflow-hidden h-48">
+                                            <img src={img} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        </div>
+                                        <div className="p-6">
+                                            <p className="text-xs uppercase tracking-luxe text-yellow-400 font-medium mb-1">{label}</p>
+                                            <h4 className="font-serif text-xl text-white mb-2">{title}</h4>
+                                            <p className="text-white/50 text-sm leading-6 mb-4">{desc}</p>
+                                            <span className="text-yellow-400 font-serif text-lg">{prix}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Badge confiance */}
+                            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 border-t border-white/10 pt-10">
+                                {['Création artisanale', 'Livraison sécurisée', 'Certificat d\'authenticité', 'Sur-mesure disponible'].map(badge => (
+                                    <div key={badge} className="flex items-center gap-2 text-white/50 text-xs uppercase tracking-luxe">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block"></span>
+                                        {badge}
+                                    </div>
+                                ))}
+                            </div>
+
+                        </div>
+                    </section>
+                    {/* ===== FIN SECTION COMMERCIALE ===== */}
+
+                    <section id="maison" className="bg-slate-50 py-20 sm:py-28" data-reveal>
+                        <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+                            <div>
+                                <p className="mb-4 text-sm uppercase tracking-luxe text-gold font-medium">Maison</p>
+                                <h2 className="font-serif text-4xl leading-tight text-foreground sm:text-6xl">{about.title}</h2>
+                            </div>
+                            <div className="max-w-2xl text-lg leading-9 text-muted-foreground">
+                                <p>{about.body}</p>
+                                <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+                                    {categories.map((category) => (
+                                        <span key={category} className="border border-border bg-white px-3 py-4 text-xs uppercase tracking-luxe text-foreground shadow-sm">
+                                            {category}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="collection" className="bg-background py-20 sm:py-28" data-reveal>
+                        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+                            <div className="mb-12 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+                                <div>
+                                    <p className="mb-4 text-sm uppercase tracking-luxe text-gold font-medium">Catalogue</p>
+                                    <h2 className="font-serif text-4xl leading-tight text-foreground sm:text-6xl">Pièces signatures</h2>
+                                </div>
+                            </div>
+
+                            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                {products.map((product, index) => (
+                                    <article key={product.id} className="group overflow-hidden border border-border bg-card shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-lg">
+                                        <div className="aspect-square overflow-hidden bg-muted">
+                                            <img
+                                                src={product.image_url || fallbackImages[index % fallbackImages.length]}
+                                                alt={`${product.name} - ${product.category}`}
+                                                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                        <div className="p-6">
+                                            <div className="mb-4 flex items-center justify-between gap-4 text-xs uppercase tracking-luxe text-gold font-medium">
+                                                <span>{product.category}</span>
+                                                {product.is_featured && <span>Signature</span>}
+                                            </div>
+                                            <h3 className="font-serif text-2xl text-card-foreground">{product.name}</h3>
+                                            <p className="mt-3 min-h-[5rem] text-sm leading-7 text-muted-foreground">{product.description}</p>
+                                            <p className="mt-6 font-serif text-2xl text-foreground">{formatPrice(Number(product.price))}</p>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+
+
+                    <footer className="border-t border-border bg-background py-10">
+                        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+                            <div className="flex items-center gap-3">
+                                <img src="logo-final.png" alt="BVB Logo" className="h-10 w-auto object-contain" />
+                                <p className="font-serif text-2xl text-foreground font-semibold">Benchakroun</p>
+                            </div>
+                            <div className="flex items-center gap-4 text-muted-foreground">
+                                <a href="https://www.facebook.com/" aria-label="Facebook" className="transition-colors hover:text-gold"><FacebookIcon className="w-5 h-5" /></a>
+                                <a href="https://www.instagram.com/" aria-label="Instagram" className="transition-colors hover:text-gold"><InstagramIcon className="w-5 h-5" /></a>
+                                <a href="https://www.tiktok.com/" aria-label="TikTok" className="transition-colors hover:text-gold"><TikTokIcon className="w-5 h-5" /></a>
+                                <a href={whatsappUrl} aria-label="WhatsApp" className="transition-colors hover:text-gold"><WhatsAppIcon className="w-5 h-5" /></a>
+                            </div>
+                        </div>
+                    </footer>
+
+                    <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="fixed bottom-5 right-5 z-50 grid size-14 place-items-center rounded-full bg-gold text-white shadow-lg transition-transform hover:scale-105 focus:outline-none"
+                        aria-label="Ouvrir WhatsApp"
+                        style={{ width: '56px', height: '56px' }}
+                    >
+                        <WhatsAppIcon className="w-7 h-7" />
+                    </a>
+                </main>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Index />);
+    </script>
+</body>
+
+</html>
